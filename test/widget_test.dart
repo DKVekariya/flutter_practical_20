@@ -5,26 +5,31 @@
 // gestures. You can also use WidgetTester to find child widgets in the widget
 // tree, read text, and verify that the values of widget properties are correct.
 
-import 'package:flutter/material.dart';
+import 'package:flutter_practical_20/data/repositories/task_repository.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:mockito/mockito.dart';
+import 'package:sqflite/sqflite.dart';
 
-import 'package:flutter_practical_20/main.dart';
+class MockDatabase extends Mock implements Database {}
 
 void main() {
-  testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+  late TaskRepository repository;
+  late MockDatabase mockDatabase;
 
-    // Verify that our counter starts at 0.
-    expect(find.text('0'), findsOneWidget);
-    expect(find.text('1'), findsNothing);
+  setUp(() {
+    mockDatabase = MockDatabase();
+    repository = TaskRepository();
+  });
 
-    // Tap the '+' icon and trigger a frame.
-    await tester.tap(find.byIcon(Icons.add));
-    await tester.pump();
+  test('getTasks returns list of tasks', () async {
+    when(mockDatabase.query('tasks')).thenAnswer((_) async => [
+      {'id': 1, 'title': 'Test Task', 'is_completed': 0, 'created_at': '2023-10-01T00:00:00Z'},
+    ]);
+    when(mockDatabase.query('subtasks')).thenAnswer((_) async => []);
 
-    // Verify that our counter has incremented.
-    expect(find.text('0'), findsNothing);
-    expect(find.text('1'), findsOneWidget);
+    final tasks = await repository.getTasks();
+
+    expect(tasks.length, 1);
+    expect(tasks[0].title, 'Test Task');
   });
 }
